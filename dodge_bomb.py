@@ -73,11 +73,35 @@ def init_bb_imgs() -> tuple[list[pg.Surface], list[int]]:
     return bb_imgs, bb_accs
 
 
+def get_kk_imgs() -> dict[tuple[int, int], pg.Surface]:
+    """
+    移動量タプルと回転・反転したこうかとんSurfaceの対応辞書を作成する関数（追加機能3）
+    戻り値：{(dx, dy): 画像Surface} の辞書
+    """
+    kk_img = pg.image.load("fig/3.png")
+    kk_flip = pg.transform.flip(kk_img, True, False)
+
+    return {
+        (0, 0): pg.transform.rotozoom(kk_img, 0, 0.9),
+        (-5, 0): pg.transform.rotozoom(kk_img, 0, 0.9),
+        (-5, -5): pg.transform.rotozoom(kk_img, -45, 0.9),
+        (0, -5): pg.transform.rotozoom(kk_flip, 90, 0.9),
+        (+5, -5): pg.transform.rotozoom(kk_flip, 45, 0.9),
+        (+5, 0): pg.transform.rotozoom(kk_flip, 0, 0.9),
+        (+5, +5): pg.transform.rotozoom(kk_flip, -45, 0.9),
+        (0, +5): pg.transform.rotozoom(kk_flip, -90, 0.9),
+        (-5, +5): pg.transform.rotozoom(kk_img, 45, 0.9),
+    }
+
+
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("fig/pg_bg.jpg")
-    kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
+
+    # こうかとん画像の辞書取得
+    kk_imgs = get_kk_imgs()
+    kk_img = kk_imgs[(0, 0)]
     kk_rct = kk_img.get_rect()
     kk_rct.center = 300, 200
 
@@ -101,19 +125,23 @@ def main():
             gameover(screen)
             return
 
-        # こうかとんの移動処理
+        # こうかとんの移動および向きの更新処理
         key_lst = pg.key.get_pressed()
         sum_mv = [0, 0]
         for k, tpl in DELTA.items():
             if key_lst[k]:
                 sum_mv[0] += tpl[0]
                 sum_mv[1] += tpl[1]
+
         kk_rct.move_ip(sum_mv)
         if not check_bound(kk_rct)[0] or not check_bound(kk_rct)[1]:
             kk_rct.move_ip(-sum_mv[0], -sum_mv[1])
+
+        # 合計移動量に応じた向きの画像を選択して描画
+        kk_img = kk_imgs[tuple(sum_mv)]
         screen.blit(kk_img, kk_rct)
 
-        # 爆弾の拡大・加速および移動処理（追加機能2）
+        # 爆弾の拡大・加速および移動処理
         idx = min(tmr // 500, 9)
         avx = vx * bb_accs[idx]
         avy = vy * bb_accs[idx]
