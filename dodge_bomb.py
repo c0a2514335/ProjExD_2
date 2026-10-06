@@ -111,15 +111,25 @@ def calc_orientation(
     dy = dst.centery - org.centery
     norm = math.sqrt(dx**2 + dy**2)
 
-    # 距離が300未満または0の場合は慣性（計算前の方向）で移動させる
     if norm < 300 or norm == 0:
         return current_xy
 
-    # 差ベクトルのノルムが√50になるように正規化
     target_norm = math.sqrt(50)
     vx = (dx / norm) * target_norm
     vy = (dy / norm) * target_norm
     return vx, vy
+
+
+def draw_score(screen: pg.Surface, score: int) -> None:
+    """
+    生存時間に応じたスコアを画面左上に描画する関数（追加機能5）
+    引数：
+        screen: 描画対象のSurface
+        score: 表示するスコア値（フレーム数）
+    """
+    font = pg.font.Font(None, 45)
+    txt_surface = font.render(f"Score: {score}", True, (0, 0, 255))
+    screen.blit(txt_surface, (20, 20))
 
 
 def main():
@@ -184,6 +194,9 @@ def main():
         if not tate:
             vy *= -1
         screen.blit(bb_img, bb_rct)
+
+        # スコアのリアルタイム描画（追加機能5）
+        draw_score(screen, tmr)
 
         pg.display.update()
         tmr += 1
