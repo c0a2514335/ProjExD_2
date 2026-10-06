@@ -37,30 +37,40 @@ def gameover(screen: pg.Surface) -> None:
     引数：screen Surface
     ブラックアウト表示、泣いているこうかとん、Game Overテキストを描画し5秒間停止する
     """
-    # 1. 黒い画面（ブラックアウト用Surface）の作成と半透明化
     black_img = pg.Surface((WIDTH, HEIGHT))
     black_img.fill((0, 0, 0))
-    black_img.set_alpha(180)  # 透明度設定
+    black_img.set_alpha(180)
 
-    # 2. 白文字で「Game Over」文字列Surfaceを生成
     font = pg.font.Font(None, 80)
     txt_surface = font.render("Game Over", True, (255, 255, 255))
     txt_rect = txt_surface.get_rect(center=(WIDTH // 2, HEIGHT // 2))
 
-    # 3. 泣いているこうかとん（8.png）の読み込みと配置位置の設定
     cry_img = pg.image.load("fig/8.png")
     cry_rect_left = cry_img.get_rect(center=(txt_rect.left - 50, HEIGHT // 2))
     cry_rect_right = cry_img.get_rect(center=(txt_rect.right + 50, HEIGHT // 2))
 
-    # 4. ブラックアウト用Surfaceの上に文字とこうかとんを描画
     black_img.blit(txt_surface, txt_rect)
     black_img.blit(cry_img, cry_rect_left)
     black_img.blit(cry_img, cry_rect_right)
 
-    # 5. メイン画面に貼り付けて画面更新5秒間停止
     screen.blit(black_img, [0, 0])
     pg.display.update()
     time.sleep(5)
+
+
+def init_bb_imgs() -> tuple[list[pg.Surface], list[int]]:
+    """
+    サイズが異なる爆弾Surfaceのリストと加速度のリストを生成する関数（追加機能2）
+    戻り値：(爆弾Surfaceのリスト, 加速度のリスト)
+    """
+    bb_imgs = []
+    for r in range(1, 11):
+        bb_img = pg.Surface((20 * r, 20 * r))
+        pg.draw.circle(bb_img, (255, 0, 0), (10 * r, 10 * r), 10 * r)
+        bb_img.set_colorkey((0, 0, 0))
+        bb_imgs.append(bb_img)
+    bb_accs = [a for a in range(1, 11)]
+    return bb_imgs, bb_accs
 
 
 def main():
@@ -71,10 +81,9 @@ def main():
     kk_rct = kk_img.get_rect()
     kk_rct.center = 300, 200
 
-    bb_img = pg.Surface((20, 20))
-    pg.draw.circle(bb_img, (255, 0, 0), (10, 10), 10)
-    bb_img.set_colorkey((0, 0, 0))
-
+    # 爆弾Surfaceと加速度リストの初期化
+    bb_imgs, bb_accs = init_bb_imgs()
+    bb_img = bb_imgs[0]
     bb_rct = bb_img.get_rect()
     bb_rct.center = random.randint(0, WIDTH), random.randint(0, HEIGHT)
     vx, vy = +5, +5
@@ -104,8 +113,15 @@ def main():
             kk_rct.move_ip(-sum_mv[0], -sum_mv[1])
         screen.blit(kk_img, kk_rct)
 
-        # 爆弾の移動処理
-        bb_rct.move_ip(vx, vy)
+        # 爆弾の拡大・加速および移動処理（追加機能2）
+        idx = min(tmr // 500, 9)
+        avx = vx * bb_accs[idx]
+        avy = vy * bb_accs[idx]
+        bb_img = bb_imgs[idx]
+        bb_rct.width = bb_img.get_rect().width
+        bb_rct.height = bb_img.get_rect().height
+
+        bb_rct.move_ip(avx, avy)
         yoko, tate = check_bound(bb_rct)
         if not yoko:
             vx *= -1
