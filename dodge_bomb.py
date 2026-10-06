@@ -18,12 +18,14 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
+
     """
     オブジェクトが画面内にあるか判定する関数
     引数：こうかとんRect または 爆弾Rect
     戻り値：タプル(横方向判定, 縦方向判定)
             画面内なら True / 画面外なら False
     """
+
     yoko, tate = True, True
     if obj_rct.left < 0 or WIDTH < obj_rct.right:
         yoko = False
@@ -33,11 +35,13 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
 
 
 def gameover(screen: pg.Surface) -> None:
+
     """
     ゲームオーバー画面を表示する関数（追加機能1）
     引数：screen Surface
     ブラックアウト表示、泣いているこうかとん、Game Overテキストを描画し5秒間停止する
     """
+
     black_img = pg.Surface((WIDTH, HEIGHT))
     black_img.fill((0, 0, 0))
     black_img.set_alpha(180)
@@ -98,6 +102,7 @@ def get_kk_imgs() -> dict[tuple[int, int], pg.Surface]:
 def calc_orientation(
     org: pg.Rect, dst: pg.Rect, current_xy: tuple[float, float]
 ) -> tuple[float, float]:
+    
     """
     爆弾(org)からこうかとん(dst)への移動方向ベクトル(vx, vy)を計算する関数（追加機能4）
     引数：
@@ -107,6 +112,7 @@ def calc_orientation(
     戻り値：
         更新された速度ベクトル (vx, vy)
     """
+
     dx = dst.centerx - org.centerx
     dy = dst.centery - org.centery
     norm = math.sqrt(dx**2 + dy**2)
@@ -121,12 +127,14 @@ def calc_orientation(
 
 
 def draw_score(screen: pg.Surface, score: int) -> None:
+
     """
     生存時間に応じたスコアを画面左上に描画する関数（追加機能5）
     引数：
         screen: 描画対象のSurface
         score: 表示するスコア値（フレーム数）
     """
+    
     font = pg.font.Font(None, 45)
     txt_surface = font.render(f"Score: {score}", True, (0, 0, 255))
     screen.blit(txt_surface, (20, 20))
