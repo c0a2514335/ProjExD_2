@@ -1,3 +1,4 @@
+import math
 import os
 import random
 import sys
@@ -33,7 +34,7 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
 
 def gameover(screen: pg.Surface) -> None:
     """
-    ゲームオーバー画面を表示する関数
+    ゲームオーバー画面を表示する関数（追加機能1）
     引数：screen Surface
     ブラックアウト表示、泣いているこうかとん、Game Overテキストを描画し5秒間停止する
     """
@@ -94,23 +95,48 @@ def get_kk_imgs() -> dict[tuple[int, int], pg.Surface]:
     }
 
 
+def calc_orientation(
+    org: pg.Rect, dst: pg.Rect, current_xy: tuple[float, float]
+) -> tuple[float, float]:
+    """
+    爆弾(org)からこうかとん(dst)への移動方向ベクトル(vx, vy)を計算する関数（追加機能4）
+    引数：
+        org: 爆弾のRect
+        dst: こうかとんのRect
+        current_xy: 現在の爆弾の速度ベクトル (vx, vy)
+    戻り値：
+        更新された速度ベクトル (vx, vy)
+    """
+    dx = dst.centerx - org.centerx
+    dy = dst.centery - org.centery
+    norm = math.sqrt(dx**2 + dy**2)
+
+    # 距離が300未満または0の場合は慣性（計算前の方向）で移動させる
+    if norm < 300 or norm == 0:
+        return current_xy
+
+    # 差ベクトルのノルムが√50になるように正規化
+    target_norm = math.sqrt(50)
+    vx = (dx / norm) * target_norm
+    vy = (dy / norm) * target_norm
+    return vx, vy
+
+
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("fig/pg_bg.jpg")
 
-    # こうかとん画像の辞書取得
     kk_imgs = get_kk_imgs()
     kk_img = kk_imgs[(0, 0)]
     kk_rct = kk_img.get_rect()
     kk_rct.center = 300, 200
 
-    # 爆弾Surfaceと加速度リストの初期化
     bb_imgs, bb_accs = init_bb_imgs()
     bb_img = bb_imgs[0]
     bb_rct = bb_img.get_rect()
     bb_rct.center = random.randint(0, WIDTH), random.randint(0, HEIGHT)
-    vx, vy = +5, +5
+    vx, vy = +5.0, +5.0
 
     clock = pg.time.Clock()
     tmr = 0
@@ -125,7 +151,7 @@ def main():
             gameover(screen)
             return
 
-        # こうかとんの移動および向きの更新処理
+        # こうかとんの移動処理
         key_lst = pg.key.get_pressed()
         sum_mv = [0, 0]
         for k, tpl in DELTA.items():
@@ -137,11 +163,13 @@ def main():
         if not check_bound(kk_rct)[0] or not check_bound(kk_rct)[1]:
             kk_rct.move_ip(-sum_mv[0], -sum_mv[1])
 
-        # 合計移動量に応じた向きの画像を選択して描画
         kk_img = kk_imgs[tuple(sum_mv)]
         screen.blit(kk_img, kk_rct)
 
-        # 爆弾の拡大・加速および移動処理
+        # 追従方向の計算（追加機能4）
+        vx, vy = calc_orientation(bb_rct, kk_rct, (vx, vy))
+
+        # 爆弾の拡大・加速および移動処理（追加機能2）
         idx = min(tmr // 500, 9)
         avx = vx * bb_accs[idx]
         avy = vy * bb_accs[idx]
